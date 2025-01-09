@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackWeb - Panel de Administración</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Font Awesome -->
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #000000;
+            color: white;
+            position: relative;
+        }
+
+        /* Icono de cierre de sesión */
+        .logout-icon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .logout-icon:hover {
+            color: #ff3333;
+            /* Cambia el color al pasar el ratón */
+        }
+
+        /* Barra lateral */
+        .sidebar {
+            width: 250px;
+            background-color: #333;
+            color: white;
+            padding-top: 20px;
+            position: fixed;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            top: 0;
+            left: 0;
+        }
+
+        .sidebar h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .sidebar a {
+            color: white;
+            padding: 15px;
+            text-decoration: none;
+            font-size: 18px;
+            display: block;
+            border-bottom: 1px solid #444;
+        }
+
+        .sidebar a:hover {
+            background-color: #555;
+        }
+
+        /* Contenedor principal */
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-input {
+            margin: 10px 0;
+            padding: 10px;
+            width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .form-input:focus {
+            border-color: #4CAF50;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #3280e6;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #030303;
+        }
+
+        .footer {
+            text-align: center;
+            background-color: #000000;
+            color: white;
+            padding: 20px;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+        }
+
+        /* Estilos de la tabla de actividades */
+        .activity-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .activity-table th,
+        .activity-table td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .activity-table th {
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>TrackWeb - Panel de Administración</h1>
+        <!-- Icono de Cerrar Sesión -->
+        <i class="fas fa-sign-out-alt logout-icon" onclick="logout()">Salir</i>
+    </header>
+
+    <!-- Barra lateral -->
+    <div class="sidebar">
+        <h1>Dashboard</h1>
+        <a href="javascript:void(0)" onclick="showSection('dashboard')">Inicio</a>
+        <a href="javascript:void(0)" onclick="showSection('userManagement')">Gestionar Usuarios</a>
+        <a href="javascript:void(0)" onclick="showSection('platformData')">Ver Plataformas</a>
+        <!-- Enlace de configuración, ya agregado -->
+        <a href="javascript:void(0)" onclick="showSection('config')">Configuración</a>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <!-- Dashboard con actividades de usuario -->
+        <section class="section" id="dashboard" style="display: block;">
+            <h2>Bienvenido al Panel de Administración</h2>
+            <p>Desde aquí puedes gestionar usuarios, ver plataformas y modificar configuraciones.</p>
+            <h3>Últimas Actividades</h3>
+            <table class="activity-table" id="activityTable">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Acción</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Las actividades se cargarán aquí -->
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Gestión de usuarios -->
+        <section class="section" id="userManagement" style="display: none;">
+            <h3>Gestión de Usuarios</h3>
+            <ul id="userList" class="user-list">
+                <!-- Los usuarios se cargarán aquí dinámicamente -->
+            </ul>
+            <div class="form-container">
+                <h4>Agregar/Editar Usuario</h4>
+                <form id="userForm">
+                    <input type="text" id="newUserName" class="form-input" placeholder="Nombre de usuario" required>
+                    <input type="password" id="newUserCode" class="form-input" placeholder="Código de acceso" required>
+                    <select id="userRole" class="form-input" required>
+                        <option value="user">Usuario</option>
+                        <option value="admin">Administrador</option>
+                    </select>
+                    <button type="submit">Guardar Usuario</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Datos de plataformas -->
+        <section class="section" id="platformData" style="display: none;">
+            <h3>Datos de Plataformas</h3>
+            <ul id="platformsList" class="platform-list">
+                <!-- Las plataformas se cargarán aquí -->
+            </ul>
+        </section>
+
+        <!-- Configuración (sección añadida) -->
+        <section class="section" id="config" style="display: none;">
+            <h3>Configuración</h3>
+            <p>Aquí puedes modificar configuraciones generales del sistema.</p>
+            <form id="configForm">
+                <label for="systemTheme">Tema del sistema:</label>
+                <select id="systemTheme" class="form-input">
+                    <option value="light">Claro</option>
+                    <option value="dark">Oscuro</option>
+                </select>
+                <button type="submit">Guardar Configuración</button>
+            </form>
+        </section>
+    </div>
+
+    <!-- Pie de página -->
+    <footer class="footer">
+        <p>&copy; 2024 TrackWeb Designed by Luz Martinez. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Función para mostrar la sección seleccionada
+        function showSection(sectionId) {
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                if (section.id === sectionId) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+        }
+
+        // Verificar si el usuario es administrador
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser || currentUser.role !== "admin") {
+            alert("Acceso denegado. Solo los administradores pueden acceder a esta página.");
+            window.location.href = "index.html";  // Redirigir a la página TrackWeb.html
+        }
+
+        // Función de logout
+        function logout() {
+            localStorage.removeItem('currentUser');  // Eliminar la sesión del usuario
+            window.location.href = "index.html";    // Redirigir a TrackWeb.html
+        }
+
+        // Función para registrar la actividad de los usuarios
+        function logActivity(user, action) {
+            const activities = JSON.parse(localStorage.getItem('activities')) || [];
+            const date = new Date().toLocaleString();
+            activities.push({ user, action, date });
+            localStorage.setItem('activities', JSON.stringify(activities));
+            renderActivities();
+        }
+
+        // Función para renderizar actividades en el Dashboard
+        function renderActivities() {
+            const activities = JSON.parse(localStorage.getItem('activities')) || [];
+            const activityTable = document.getElementById('activityTable').getElementsByTagName('tbody')[0];
+            activityTable.innerHTML = '';
+            activities.forEach(activity => {
+                const row = activityTable.insertRow();
+                row.insertCell(0).textContent = activity.user;
+                row.insertCell(1).textContent = activity.action;
+                row.insertCell(2).textContent = activity.date;
+            });
+        }
+
+        // Función para renderizar usuarios
+        function renderUsers() {
+            const users = JSON.parse(localStorage.getItem('users')) || {};
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            Object.entries(users).forEach(([user, data]) => {
+                const li = document.createElement('li');
+                li.textContent = `${user} - Rol: ${data.role}`;
+                const activityButton = document.createElement('button');
+                activityButton.textContent = 'Ver Actividad';
+                activityButton.onclick = () => showUserActivity(user);
+                li.appendChild(activityButton);
+                userList.appendChild(li);
+            });
+        }
+
+        // Función para mostrar las actividades de un usuario específico
+        function showUserActivity(user) {
+            const activities = JSON.parse(localStorage.getItem('activities')) || [];
+            const userActivities = activities.filter(activity => activity.user === user);
+            const activityTable = document.getElementById('activityTable').getElementsByTagName('tbody')[0];
+            activityTable.innerHTML = '';
+            userActivities.forEach(activity => {
+                const row = activityTable.insertRow();
+                row.insertCell(0).textContent = activity.user;
+                row.insertCell(1).textContent = activity.action;
+                row.insertCell(2).textContent = activity.date;
+            });
+            showSection('dashboard');
+        }
+
+        // Función para renderizar plataformas
+        function renderPlatforms() {
+            const users = JSON.parse(localStorage.getItem('users')) || {};
+            const platformsList = document.getElementById('platformsList');
+            platformsList.innerHTML = '';
+            Object.entries(users).forEach(([user, data]) => {
+                const li = document.createElement('li');
+                li.textContent = `${user} - Plataformas: ${data.platforms ? data.platforms.join(', ') : 'Ninguna'}`;
+                platformsList.appendChild(li);
+            });
+        }
+
+        // Inicialización
+        renderUsers();
+        renderPlatforms();
+        renderActivities();
+
+        // Simular una actividad
+        logActivity('lucero', 'Acceso al panel de administración');
+    </script>
+</body>
+
+</html>

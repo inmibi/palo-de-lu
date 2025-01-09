@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Plataforma - TrackWeb</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            text-align: center;
+            padding: 10px 0;
+            width: 100%;
+        }
+
+        main {
+            flex: 1;
+            padding: 10px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 10px 0;
+            background-color: #000000;
+            border-top: 1px solid #ccc;
+            position: sticky;
+            bottom: 0;
+            width: 100%;
+        }
+
+        form {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #0093f5;
+            color: white;
+        }
+
+        button:hover {
+            background-color: #069bf1;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        #activityTable {
+            margin: 20px 0;
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+        }
+
+        #activityTable th,
+        #activityTable td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        #activityTable th {
+            background-color: #f4f4f4;
+        }
+
+        .no-activities {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>TrackWeb - Seguimiento de Plataforma</h1>
+    </header>
+
+    <main>
+        <h2>Formulario de Seguimiento</h2>
+        <form id="trackPlatformForm">
+            <label for="platformSelect">Selecciona el Centro:</label>
+            <select id="platformSelect" required></select>
+
+            <label for="status">Estado de la Plataforma en el Centro:</label>
+            <select id="status" required>
+                <option value="operando">Operando</option>
+                <option value="en mantenimiento">En Mantenimiento</option>
+                <option value="inactiva">Inactiva</option>
+            </select>
+
+            <label for="usage">¿Está en uso por parte del Centro?</label>
+            <select id="usage" required>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+            </select>
+
+            <label for="graphsStatus">¿Gráficos y Estadísticas funcionan?</label>
+            <select id="graphsStatus" required>
+                <option value="bien">Bien</option>
+                <option value="errores">Con Errores</option>
+                <option value="no_funciona">No Funcionan</option>
+            </select>
+
+            <label for="comment">Comentarios adicionales:</label>
+            <textarea id="comment" rows="4"
+                placeholder="Escribe cualquier comentario sobre el estado de la plataforma"></textarea>
+
+            <button type="submit">Registrar Seguimiento</button>
+        </form>
+
+        <section id="activityLog">
+            <h3>Historial de Seguimientos</h3>
+            <table id="activityTable">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Plataforma</th>
+                        <th>Estado</th>
+                        <th>Uso</th>
+                        <th>Gráficos</th>
+                        <th>Comentarios</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Filas dinámicas -->
+                </tbody>
+            </table>
+            <p id="noActivitiesMessage" class="no-activities" style="display: none;">No hay actividades registradas.</p>
+            <div class="button-container">
+                <button type="button" id="downloadPDFButton">Descargar PDF</button>
+                <button type="button" id="printButton">Imprimir</button>
+                <button type="button" id="sendEmailButton">Enviar por Correo</button>
+                <button type="button" id="backToProfileButton">Volver al Perfil</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 TrackWeb Designed by Luz Martinez. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Recuperar las plataformas del localStorage
+        const platforms = JSON.parse(localStorage.getItem('platforms')) || {};
+        const currentUser = localStorage.getItem('userName');
+        const activities = JSON.parse(localStorage.getItem('activities')) || [];
+
+        // Función para cargar las plataformas del usuario
+        function loadPlatforms() {
+            const platformSelect = document.getElementById('platformSelect');
+            platformSelect.innerHTML = ''; // Limpiar las opciones previas
+
+            const userPlatforms = platforms[currentUser] || [];
+            if (userPlatforms.length === 0) {
+                const noPlatformsOption = document.createElement('option');
+                noPlatformsOption.textContent = 'No tienes plataformas registradas';
+                platformSelect.appendChild(noPlatformsOption);
+            } else {
+                userPlatforms.forEach((platform, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `${platform.name} (${platform.url})`;
+                    platformSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Función para registrar un seguimiento
+        document.getElementById('trackPlatformForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const platformSelect = document.getElementById('platformSelect');
+            const selectedPlatformIndex = platformSelect.value;
+            const platform = platforms[currentUser][selectedPlatformIndex];
+
+            const status = document.getElementById('status').value;
+            const usage = document.getElementById('usage').value;
+            const graphsStatus = document.getElementById('graphsStatus').value;
+            const comment = document.getElementById('comment').value;
+
+            // Crear el objeto de actividad
+            const activity = {
+                date: new Date().toLocaleDateString(),
+                time: new Date().toLocaleTimeString(),
+                platform: platform.name,
+                status: status,
+                usage: usage,
+                graphsStatus: graphsStatus,
+                comment: comment
+            };
+
+            // Agregar la actividad al historial
+            activities.push(activity);
+            localStorage.setItem('activities', JSON.stringify(activities));
+
+            // Limpiar el formulario
+            document.getElementById('trackPlatformForm').reset();
+
+            // Actualizar la tabla de actividades
+            renderActivityLog();
+        });
+
+        // Función para renderizar el historial de actividades
+        function renderActivityLog() {
+            const activityTableBody = document.getElementById('activityTable').getElementsByTagName('tbody')[0];
+            activityTableBody.innerHTML = ''; // Limpiar la tabla actual
+
+            if (activities.length === 0) {
+                document.getElementById('noActivitiesMessage').style.display = 'block';
+            } else {
+                document.getElementById('noActivitiesMessage').style.display = 'none';
+                activities.forEach(activity => {
+                    const row = activityTableBody.insertRow();
+                    row.insertCell(0).textContent = activity.date;
+                    row.insertCell(1).textContent = activity.time;
+                    row.insertCell(2).textContent = activity.platform;
+                    row.insertCell(3).textContent = activity.status;
+                    row.insertCell(4).textContent = activity.usage;
+                    row.insertCell(5).textContent = activity.graphsStatus;
+                    row.insertCell(6).textContent = activity.comment;
+                });
+            }
+        }
+
+        // Función para descargar el historial en PDF
+            document.getElementById('downloadPDFButton').addEventListener('click', function () {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                let y = 20;
+
+                doc.setFontSize(18);
+                doc.text("Historial de Seguimientos", 14, y);
+                y += 10;
+
+                // Iterar sobre las actividades y agregarlas al PDF
+                activities.forEach(activity => {
+                    doc.setFontSize(12);
+                    doc.text(`Fecha: ${activity.date}`, 14, y);
+                    doc.text(`Hora: ${activity.time}`, 14, y + 10);
+                    doc.text(`Plataforma: ${activity.platform}`, 14, y + 20);
+                    doc.text(`Estado: ${activity.status}`, 14, y + 30);
+                    doc.text(`Uso: ${activity.usage}`, 14, y + 40);
+                    doc.text(`Gráficos: ${activity.graphsStatus}`, 14, y + 50);
+                    doc.text(`Comentarios: ${activity.comment}`, 14, y + 60);
+                    y += 70; // Ajustar la distancia para la siguiente actividad
+                });
+
+                // Guardar el archivo PDF
+                doc.save("historial_seguimientos.pdf");
+            });
+
+            // Función para imprimir el historial
+            document.getElementById('printButton').addEventListener('click', function () {
+                const printContent = document.getElementById('activityLog').innerHTML;
+                const originalContent = document.body.innerHTML;
+                document.body.innerHTML = printContent;
+                window.print();
+                document.body.innerHTML = originalContent;
+            });
+
+            // Funcion para enviar correo
+            document.getElementById("sendEmailButton").addEventListener("click", function () {
+                    var subject = "Asunto del correo"; // Puedes modificar esto según necesites
+                    var body = "Este es el cuerpo del correo."; // También puedes personalizar el contenido
+                    var to = "correo@ejemplo.com"; // Dirección de correo a la que se enviará el correo, puedes dejarlo vacío para que el usuario ingrese el destinatario
+
+                    var mailtoLink = "mailto:" + to + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+
+                    window.location.href = mailtoLink;  // Esto abrirá el cliente de correo predeterminado del usuario
+                });
+
+        // Cargar las plataformas y actividades cuando se carga la página
+        window.onload = function () {
+            loadPlatforms();
+            renderActivityLog();
+        };
+
+        // Redirigir al perfil
+        document.getElementById('backToProfileButton').addEventListener('click', function () {
+            window.location.href = 'platforms.html'; // Redirige a platforms.html
+        });
+    </script>
+</body>
+
+</html>

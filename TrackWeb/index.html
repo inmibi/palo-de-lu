@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackWeb - Inicio de Sesión</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: auto;
+            padding: 30px;
+            width: 100%;
+            background-color: #000000;
+            color: white;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .welcome-container {
+            margin-bottom: 30px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 300px;
+            gap: 15px;
+        }
+
+        form label {
+            text-align: left;
+        }
+
+        form input {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #errorMessage {
+            color: red;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header style="text-align: left;">
+        <h1>TrackWeb</h1>
+    </header>
+
+    <main>
+        <div class="welcome-container">
+            <h1>Bienvenido a TrackWeb</h1>
+            <p>La primera y más completa plataforma de seguimiento web de República Dominicana.</p>
+            <p>Ingresa tu nombre de usuario y código de acceso para continuar.</p>
+        </div>
+
+        <h2>Inicia Sesión</h2>
+        <form id="loginForm">
+            <label for="userName">Nombre de usuario:</label>
+            <input type="text" id="userName" required>
+
+            <label for="userCode">Código de acceso:</label>
+            <input type="password" id="userCode" required>
+
+            <button type="submit" aria-label="Iniciar sesión">Iniciar sesión</button>
+        </form>
+        <p id="errorMessage"></p>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 TrackWeb Designed by Luz Martinez. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Definir los usuarios iniciales con roles
+        const defaultUsers = {
+            "lucero": { "password": "01091994", "role": "admin" },
+            "soporte": { "password": "102030", "role": "user" }
+        };
+    
+        // Guardar los usuarios en localStorage si no existen
+        localStorage.clear();
+        localStorage.setItem('users', JSON.stringify({
+            "lucero": { "password": "01091994", "role": "admin" },
+            "soporte": { "password": "102030", "role": "user" }
+        }));
+
+    
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const userName = document.getElementById('userName').value.trim();
+            const userCode = document.getElementById('userCode').value;
+    
+            // Obtener los usuarios desde localStorage
+            const users = JSON.parse(localStorage.getItem('users'));
+    
+            if (users[userName] && users[userName].password === userCode) {
+                localStorage.setItem('currentUser', JSON.stringify({ name: userName, role: users[userName].role })); // Guardar el usuario actual
+    
+                if (users[userName].role === "admin") {
+                    window.location.href = 'admin.html'; // Redirigir al panel de administrador
+                } else {
+                    window.location.href = 'platforms.html'; // Redirigir al usuario regular
+                }
+            } else {
+                document.getElementById('errorMessage').textContent = 'Usuario o código de acceso incorrecto.';
+            }
+        });
+    </script>
+</body>
+</html>

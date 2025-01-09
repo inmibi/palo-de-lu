@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrackWeb - Gestión de Plataformas</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            text-align: left;
+            padding: 20px 0;
+        }
+
+        /* Estilos para el contenedor de botones */
+        .button-container {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            /* Espacio entre botones */
+            margin-top: 20px;
+        }
+
+        /* Estilo básico para los botones */
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Estilo para los botones de eliminar y editar */
+        .platform-actions {
+            display: inline-block;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>TrackWeb</h1>
+    </header>
+    <main>
+        <h2>Bienvenido! <span id="userNameDisplay"></span></h2>
+        <p>Gestiona tus plataformas web.</p>
+
+        <!-- Contenedor de botones -->
+        <div class="button-container">
+            <button id="toFormButton">Realizar Seguimiento</button>
+            <button id="togglePlatformListButton">Ver plataformas agregadas</button>
+            <button id="logoutButton">Cerrar Sesión</button>
+        </div>
+
+        <!-- Lista de plataformas -->
+        <section id="platformSection" style="display: none;">
+            <h3>Plataformas Registradas</h3>
+            <ul id="platformList"></ul>
+        </section>
+
+        <!-- Formulario para agregar plataformas -->
+        <section>
+            <h3>Agregar Nueva Plataforma</h3>
+            <form id="addPlatformForm">
+                <label for="platformName">Nombre de la plataforma:</label>
+                <input type="text" id="platformName" required>
+
+                <label for="platformUrl">URL:</label>
+                <input type="url" id="platformUrl" required>
+
+                <button type="submit">Agregar Plataforma</button>
+            </form>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 TrackWeb Designed by Luz Martinez. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        const currentUser = localStorage.getItem('userName'); // Nombre del usuario actual
+        const platforms = JSON.parse(localStorage.getItem('platforms')) || {}; // Plataformas por usuario
+        const users = JSON.parse(localStorage.getItem('users')) || {}; // Usuarios registrados
+
+        // Verificar el rol del usuario actual
+        const currentUserRole = users[currentUser]?.role || 'user';
+        const isAdmin = currentUserRole === 'admin';
+
+        // Mostrar nombre de usuario en el título
+        document.getElementById('userNameDisplay').textContent = currentUser;
+
+        // Función para renderizar las plataformas
+        function renderPlatforms() {
+            const platformList = document.getElementById('platformList');
+            platformList.innerHTML = '';
+
+            if (isAdmin) {
+                // Mostrar todas las plataformas para el administrador
+                Object.entries(platforms).forEach(([user, userPlatforms]) => {
+                    userPlatforms.forEach((platform, index) => {
+                        const li = document.createElement('li');
+                        li.textContent = `${platform.name} - ${platform.url} (Agregado por: ${user})`;
+
+                        // Agregar botones de eliminar y editar
+                        const actions = document.createElement('div');
+                        actions.classList.add('platform-actions');
+                        const editButton = document.createElement('button');
+                        editButton.textContent = 'Editar';
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Eliminar';
+                        actions.appendChild(editButton);
+                        actions.appendChild(deleteButton);
+                        li.appendChild(actions);
+
+                        // Editar plataforma
+                        editButton.addEventListener('click', () => editPlatform(user, index));
+                        // Eliminar plataforma
+                        deleteButton.addEventListener('click', () => deletePlatform(user, index));
+
+                        platformList.appendChild(li);
+                    });
+                });
+            } else {
+                // Mostrar solo las plataformas del usuario actual
+                const userPlatforms = platforms[currentUser] || [];
+                userPlatforms.forEach((platform, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = `${platform.name} - ${platform.url}`;
+
+                    // Agregar botones de eliminar y editar solo para el usuario
+                    const actions = document.createElement('div');
+                    actions.classList.add('platform-actions');
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Editar';
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Eliminar';
+                    actions.appendChild(editButton);
+                    actions.appendChild(deleteButton);
+                    li.appendChild(actions);
+
+                    // Editar plataforma
+                    editButton.addEventListener('click', () => editPlatform(currentUser, index));
+                    // Eliminar plataforma
+                    deleteButton.addEventListener('click', () => deletePlatform(currentUser, index));
+
+                    platformList.appendChild(li);
+                });
+            }
+        }
+
+        // Agregar una plataforma
+        document.getElementById('addPlatformForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const platformName = document.getElementById('platformName').value;
+            const platformUrl = document.getElementById('platformUrl').value;
+
+            // Si no existe un array de plataformas para el usuario, lo creamos
+            platforms[currentUser] = platforms[currentUser] || [];
+            platforms[currentUser].push({ name: platformName, url: platformUrl });
+
+            // Guardamos las plataformas de nuevo en localStorage
+            localStorage.setItem('platforms', JSON.stringify(platforms));
+
+            // Actualizamos la lista de plataformas en la interfaz
+            renderPlatforms();
+            document.getElementById('addPlatformForm').reset();
+        });
+
+        // Eliminar plataforma
+        function deletePlatform(user, index) {
+            platforms[user].splice(index, 1);
+            localStorage.setItem('platforms', JSON.stringify(platforms));
+            renderPlatforms();
+        }
+
+        // Editar plataforma
+        function editPlatform(user, index) {
+            const newName = prompt('Nuevo nombre de la plataforma:', platforms[user][index].name);
+            const newUrl = prompt('Nueva URL de la plataforma:', platforms[user][index].url);
+
+            if (newName && newUrl) {
+                platforms[user][index] = { name: newName, url: newUrl };
+                localStorage.setItem('platforms', JSON.stringify(platforms));
+                renderPlatforms();
+            }
+        }
+
+        // Cerrar sesión
+        document.getElementById('logoutButton').addEventListener('click', function () {
+            localStorage.removeItem('userName'); // Eliminar solo el usuario de la sesión
+            window.location.href = 'index.html'; // Redirigir al inicio de sesión
+        });
+
+        // Redirigir al formulario de seguimiento
+        document.getElementById('toFormButton').addEventListener('click', function () {
+            window.location.href = 'formulario.html'; // Redirigir a formulario.html
+        });
+
+        // Función para alternar la visibilidad de la lista de plataformas
+        document.getElementById('togglePlatformListButton').addEventListener('click', function () {
+            const platformSection = document.getElementById('platformSection');
+            platformSection.style.display = platformSection.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // Renderizamos las plataformas al cargar la página
+        renderPlatforms();
+
+    </script>
+</body>
+
+</html>
